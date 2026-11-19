@@ -1,0 +1,20 @@
+AGENDA DEL DOCENTE - come pubblicarla (gratis) e installarla su Android
+
+Contenuto della cartella
+  index.html     l'agenda
+  manifest.json  dati dell'app (nome, colori, icone)
+  sw.js          uso senza connessione
+  icon-192.png, icon-512.png   icone
+
+Pubblicazione con GitHub Pages (consigliato da computer)
+ 1. Crea un account su github.com e un nuovo repository pubblico (es. "agenda").
+ 2. "Add file" > "Upload files": carica TUTTI i file di questa cartella (non la cartella zippata) e conferma con "Commit".
+ 3. Settings > Pages > Source: "Deploy from a branch", Branch: main, cartella / (root) > Save.
+ 4. Dopo 1-2 minuti l'indirizzo e' https://TUONOME.github.io/agenda/
+ 5. Sul telefono apri quell'indirizzo con Chrome: menu (tre puntini) > "Installa app".
+    L'icona compare nella schermata Home e l'agenda si apre a schermo intero.
+
+Note
+ - I dati restano salvati nel telefono (non online). Fai ogni tanto "Esporta backup" dalla scheda Backup.
+ - Se aggiorni index.html, ricarica i file nel repository: l'app si aggiorna da sola alla riapertura.
+ - Altri servizi gratuiti equivalenti: Netlify, Cloudflare Pages.

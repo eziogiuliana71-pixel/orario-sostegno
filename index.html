@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#6d4aff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Agenda">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232f5d9e'/%3E%3Crect x='14' y='10' width='38' height='46' rx='4' fill='%23ffffff'/%3E%3Crect x='10' y='14' width='8' height='6' rx='3' fill='%23e3c77a'/%3E%3Crect x='10' y='29' width='8' height='6' rx='3' fill='%23e3c77a'/%3E%3Crect x='10' y='44' width='8' height='6' rx='3' fill='%23e3c77a'/%3E%3Cpath d='M22 24h24M22 33h24M22 42h16' stroke='%232f5d9e' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<title>Agenda del docente di sostegno</title>
+<style>
+  :root {
+    --bg:#f4f5f7; --card:#fff; --line:#e1e4e9; --ink:#1f2933; --muted:#6b7785;
+    --acc:#2f5d9e; --accbg:#e9f0fa; --soft:#f6f7f9; --ok:#d8f0e0; --okt:#1c6b43; --bad:#fbe0dd; --badt:#a3261e; --info:#dde9f8; --infot:#1f4f91; --warn:#fff3c4;
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  [hidden] { display:none !important; }
+  body { font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; margin:0; color:var(--ink); background:var(--bg); }
+  main { max-width:900px; margin:0 auto; padding:16px 12px 90px; }
+
+  .hero { padding:4px 4px 12px; }
+  .hero h1 { margin:0; font-size:22px; font-weight:700; }
+  .hero .as { color:var(--muted); font-size:14px; margin-top:2px; }
+
+  .tabs { display:flex; gap:6px; margin:0 0 14px; overflow-x:auto; scrollbar-width:none; }
+  .tabs::-webkit-scrollbar { display:none; }
+  .tabs a { flex:none; text-decoration:none; font-size:14px; font-weight:600; padding:6px 14px; border-radius:999px; color:var(--acc); background:var(--card); border:1px solid var(--line); }
+
+  .page { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:16px; scroll-margin-top:8px; }
+  h2 { font-size:17px; margin:0 0 12px; font-weight:700; }
+  h2 small { font-size:12px; font-weight:400; color:var(--muted); margin-left:6px; }
+  h3 { font-size:14px; font-weight:700; margin:12px 0 6px; }
+
+  .fields { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:10px 14px; }
+  label.f { display:flex; flex-direction:column; gap:3px; font-size:12px; color:var(--muted); }
+  input[type=text], input[type=date], input[type=search], input[type=number], select, textarea { font:inherit; font-size:15px; color:var(--ink); padding:8px 10px; min-height:40px; border:1px solid var(--line); border-radius:8px; background:#fff; width:100%; }
+  input:focus, select:focus, textarea:focus { outline:2px solid var(--acc); outline-offset:-1px; border-color:var(--acc); }
+  textarea { resize:vertical; line-height:1.5; }
+
+  .bar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:10px; }
+  .check { display:flex; align-items:center; gap:10px; min-height:42px; width:100%; font-weight:600; background:var(--soft); border-radius:8px; padding:4px 12px; }
+  .check input { width:20px; height:20px; accent-color:var(--acc); flex:none; }
+  button { font:600 14px system-ui,sans-serif; min-height:40px; padding:6px 16px; border:1px solid var(--acc); background:var(--acc); color:#fff; border-radius:8px; cursor:pointer; touch-action:manipulation; }
+  button:active { opacity:.85; }
+  button.sec { background:#fff; color:var(--acc); }
+  button.del { background:#fff; color:var(--badt); border-color:var(--line); min-width:40px; padding:4px 8px; }
+  button.mini { min-height:24px; min-width:24px; padding:0 5px; font-size:11px; background:#fff; color:var(--muted); border:1px solid var(--line); border-radius:6px; }
+  .hint { font-size:12px; color:var(--muted); margin-top:8px; }
+  .warn { background:var(--warn); border-radius:8px; padding:8px 12px; margin-bottom:10px; font-size:14px; }
+  .warn a { color:var(--acc); font-weight:700; }
+  .wrap { overflow-x:auto; }
+  table { border-collapse:collapse; width:100%; }
+  th, td { vertical-align:top; }
+  .days, .daytitle { display:none; }
+
+  /* promemoria */
+  .pitem { display:flex; gap:10px; align-items:center; padding:8px 4px; border-bottom:1px solid var(--line); }
+  .pitem .pb { flex:none; min-width:74px; text-align:center; font-size:12px; font-weight:700; padding:3px 8px; border-radius:999px; background:var(--info); color:var(--infot); }
+  .pitem.oggi .pb { background:var(--acc); color:#fff; } .pitem.scaduta .pb { background:var(--bad); color:var(--badt); }
+  .pitem .pt { display:flex; flex-direction:column; min-width:0; }
+  .pitem small { color:var(--muted); font-size:12px; }
+  .vuoto { color:var(--muted); padding:6px 2px; }
+
+  /* orario */
+  .orwrap { border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  #orario th, #orario td { border:1px solid var(--line); }
+  #orario th { text-align:center; font-weight:600; font-size:14px; padding:9px 4px; background:var(--soft); color:var(--ink); }
+  #orario th[data-c] { width:19%; cursor:pointer; }
+  #orario th[data-c].sel { background:var(--acc); color:#fff; }
+  #orario th.oggi::after { content:"oggi"; display:block; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.5px; opacity:.8; }
+  td.ora { background:var(--soft); font-weight:600; font-size:14px; width:112px; text-align:center; padding:6px; vertical-align:middle; }
+  .mini-bar { display:flex; flex-wrap:wrap; gap:3px; justify-content:center; margin-top:4px; max-width:92px; margin-left:auto; margin-right:auto; }
+  .oralabel, .pausatext { outline:none; border-radius:4px; padding:4px; min-width:60px; }
+  .oralabel:focus, .pausatext:focus { background:var(--warn); }
+  tr.pausa td.pausa-cell { background:var(--soft); text-align:center; vertical-align:middle; color:var(--muted); font-style:italic; }
+  #orario td[data-c] { padding:3px; background:#fff; }
+  #orario td[data-c].sel { background:var(--accbg); }
+  .cell { display:none !important; }
+  .cell:empty::before { content:"Classe / attività"; color:#8a94a6; font-size:13px; font-style:italic; pointer-events:none; }
+  .cell { min-height:48px; outline:none; border-radius:4px; padding:5px 6px; word-break:break-word; transition:background .2s; }
+  .cell:focus { box-shadow:inset 0 0 0 2px var(--acc); background:#fff !important; }
+  .sost { display:none; margin-top:3px; gap:4px; flex-wrap:wrap; }
+  body.con-sostegno .sost { display:flex; }
+  .sost select { font-size:12px; min-height:28px; padding:2px 8px; border-radius:999px; width:auto; }
+  .sost select.si { background:var(--ok); color:var(--okt); border-color:#a9dcbb; }
+  .sost select.no { background:var(--soft); color:var(--muted); }
+  .sost input.rg { font-size:13px; min-height:30px; padding:2px 10px; border-radius:999px; flex:1 1 100%; min-width:0; }
+  .sost select.mat { flex:1 1 130px; width:auto; min-width:0; border-radius:999px; }
+  .sost input.sn { font-size:12px; min-height:28px; padding:2px 8px; border-radius:999px; flex:1 1 70px; min-width:0; }
+  .riep { background:var(--soft); border-radius:10px; padding:10px 12px; margin-top:12px; font-size:14px; }
+  .riep h3 { margin:0 0 6px; }
+  .riep .rg { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:6px; }
+  .riep .chip { background:#fff; border:1px solid var(--line); border-radius:999px; padding:2px 10px; font-size:13px; }
+  .riep .chip b { color:var(--acc); }
+  .riep .tot { font-weight:700; }
+
+  /* scadenziario */
+  .filters { display:flex; flex-wrap:wrap; gap:8px 10px; align-items:center; margin-bottom:10px; }
+  .filters input[type=search] { flex:1 1 180px; width:auto; }
+  .filters select { flex:0 1 160px; width:auto; }
+  .filters label { display:flex; align-items:center; gap:6px; font-size:13px; }
+  .filters label input { width:18px; height:18px; accent-color:var(--acc); }
+  #cnt { font-size:12px; color:var(--muted); }
+  .lista th { background:var(--soft); font-size:13px; font-weight:600; padding:8px 6px; text-align:left; border-bottom:1px solid var(--line); }
+  .lista td { border-bottom:1px solid var(--line); padding:2px; }
+  td.act input, td.act select { border-color:transparent; }
+  td.act input:focus, td.act select:focus { border-color:var(--acc); }
+  td.act select { font-weight:600; border-radius:999px; padding:4px 10px; text-align-last:center; }
+  .lista tr.oggi td { background:var(--warn); }
+  .lista tr.scaduta td.act:first-child input { color:var(--badt); font-weight:700; }
+  .st-Programmata { background:var(--info) !important; color:var(--infot); }
+  .st-Svolta { background:var(--ok) !important; color:var(--okt); }
+  .st-Annullata { background:var(--bad) !important; color:var(--badt); text-decoration:line-through; }
+  .addbar { display:none; }
+  #bkstato { margin:0 0 10px; }
+
+  /* ===== Smartphone ===== */
+  @media (max-width:700px) {
+    body { font-size:14px; }
+    main { padding:10px 10px calc(84px + env(safe-area-inset-bottom)); }
+    .hero { padding-bottom:8px; } .hero h1 { font-size:19px; } .hero .as { font-size:13px; }
+    .tabs a { font-size:13px; padding:5px 12px; }
+    .page { padding:12px; margin-bottom:12px; }
+    h2 { font-size:16px; } h2 small { display:none; }
+    input[type=text], input[type=date], input[type=search], input[type=number], select, textarea { font-size:14px; min-height:38px; padding:6px 8px; }
+    label.f { font-size:11px; }
+    .fields { grid-template-columns:1fr 1fr; gap:8px 10px; }
+    #sostegno-f, #docente-f, #profilo-f { grid-column:1 / -1; }
+    button { min-height:38px; padding:5px 12px; }
+    button.mini { min-height:24px; padding:0 5px; }
+    .bar button { flex:1 1 auto; }
+    .hint { font-size:11px; }
+    .pitem .pb { min-width:62px; font-size:11px; }
+
+    .days { display:flex; gap:5px; position:sticky; top:0; z-index:5; background:var(--card); padding:6px 0; margin:0 0 6px; }
+    .days button { flex:1 1 0; min-width:0; padding:4px; background:#fff; color:var(--ink); border:1px solid var(--line); border-radius:8px; }
+    .days button.on { background:var(--acc); color:#fff; border-color:var(--acc); }
+    .daytitle { display:block; font-size:16px; font-weight:700; color:var(--acc); margin:2px 0 8px; }
+
+    .orwrap { border:none; border-radius:0; overflow:visible; }
+    #orario thead { display:none; }
+    #orario, #orario tbody { display:block; }
+    #orario tr { display:flex; margin-bottom:6px; align-items:stretch; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+    #orario td { border:none; }
+    #orario td.ora { width:76px; flex:none; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:12px; border-right:1px solid var(--line); }
+    #orario td[data-c] { display:none; flex:1; min-width:0; background:#fff; }
+    #orario[data-day="0"] td[data-c="0"], #orario[data-day="1"] td[data-c="1"], #orario[data-day="2"] td[data-c="2"],
+    #orario[data-day="3"] td[data-c="3"], #orario[data-day="4"] td[data-c="4"] { display:block; }
+    tr.pausa td.pausa-cell { flex:1; display:flex; align-items:center; justify-content:center; }
+    .cell { min-height:40px; padding:4px 6px; }
+
+    .lista, .lista tbody { display:block; }
+    .lista thead { display:none; }
+    .lista tr { display:block; position:relative; border:1px solid var(--line); border-left:4px solid var(--sc, var(--acc)); border-radius:8px; padding:8px 8px 2px; margin-bottom:8px; background:#fff; }
+    .lista tr.oggi { background:var(--warn); }
+    .lista td { display:block; border:none; background:none !important; padding:0 0 6px; }
+    .lista td::before { content:attr(data-label); display:block; font-size:11px; color:var(--muted); margin-bottom:1px; }
+    .lista td.act input, .lista td.act select { border-color:var(--line); }
+    .lista td.delc { position:absolute; top:4px; right:4px; padding:0; }
+    .lista td.delc::before { content:none; }
+    .lista td:first-child { padding-right:48px; }
+    .filters select { flex:1 1 40%; } .filters label { flex:1 1 100%; }
+    .addbar { position:fixed; left:0; right:0; bottom:0; z-index:10; background:#fff; border-top:1px solid var(--line); padding:8px 10px calc(8px + env(safe-area-inset-bottom)); display:flex; gap:8px; }
+    .addbar button { flex:1; }
+    .desk-only { display:none !important; }
+  }
+
+  /* ===== Colori ===== */
+  :root { --d0:#ef4444; --d1:#f97316; --d2:#ca8a04; --d3:#059669; --d4:#3b82f6;
+          --c-oggi:#f59e0b; --c-dati:#3b82f6; --c-orario:#8b5cf6; --c-att:#10b981; --c-app:#ec4899; --c-bk:#64748b; --viola:#6d4aff; --rosa:#ff4f9a; }
+  body { background:linear-gradient(180deg,#efeaff 0,#fff0f7 320px,#f6f7fb 700px) fixed; }
+  .hero { background:linear-gradient(120deg,var(--viola),var(--rosa) 62%,#ffb020); color:#fff; border-radius:18px; padding:18px 18px 16px; margin-bottom:14px; box-shadow:0 8px 20px rgba(109,74,255,.28); }
+  .hero .as { color:rgba(255,255,255,.9); }
+  .tabs a { border:none; color:#fff; box-shadow:0 2px 6px rgba(0,0,0,.12); }
+  .page { border:1px solid var(--line); border-top:5px solid var(--sc, var(--viola)); box-shadow:0 6px 16px rgba(60,40,140,.08); }
+  .page h2 { color:var(--sc, var(--viola)); } .page h3 { color:var(--sc, var(--viola)); }
+  #oggi { --sc:var(--c-oggi); } #dati { --sc:var(--c-dati); } #orario-sez { --sc:var(--c-orario); }
+  #attivita-sez { --sc:var(--c-att); } #appunti-sez { --sc:var(--c-app); } #backup { --sc:var(--c-bk); }
+  label.f { color:var(--sc, var(--muted)); font-weight:600; }
+  input:focus, select:focus, textarea:focus { outline-color:var(--sc, var(--viola)); border-color:var(--sc, var(--viola)); }
+  button { background:linear-gradient(135deg,var(--viola),var(--rosa)); border-color:transparent; box-shadow:0 3px 8px rgba(109,74,255,.28); }
+  button.sec { background:#fff; color:var(--viola); border:1.5px solid var(--viola); box-shadow:none; }
+  button.del { background:#fff0ef; color:#d33; border:1.5px solid #ffc9c4; box-shadow:none; }
+  button.mini { background:#fff; color:var(--viola); border:1px solid #d9d0ff; box-shadow:none; }
+  .check { background:linear-gradient(90deg,#efeaff,#ffeaf4); color:#3b2a8f; }
+  .check input { accent-color:var(--rosa); }
+  .warn { background:#fff0c9; border-left:5px solid var(--c-oggi); }
+  .warn a { color:var(--viola); }
+
+  .pitem .pb { background:#dbe7ff; color:#1d4ed8; }
+  .pitem.oggi .pb { background:var(--c-oggi); color:#fff; } .pitem.scaduta .pb { background:#ffd9d6; color:#c0261e; }
+  .pitem.oggi { background:#fff7e0; border-radius:8px; }
+
+  #orario th { background:var(--soft); }
+  #orario th[data-c] { background:var(--dc); color:#fff; opacity:.78; text-shadow:0 1px 2px rgba(0,0,0,.2); }
+  #orario th[data-c].sel { background:var(--dc); opacity:1; box-shadow:inset 0 -5px 0 rgba(255,255,255,.85); }
+  #orario th.oggi::after { background:rgba(255,255,255,.9); color:var(--dc); border-radius:999px; width:max-content; margin:2px auto 0; padding:0 8px; text-shadow:none; opacity:1; }
+  td.ora { background:linear-gradient(90deg,#f1ecff,#ffeef6); color:#4a2fb0; }
+  #orario td[data-c].sel { background:#fff; background:color-mix(in srgb, var(--dc) 13%, #fff); box-shadow:inset 0 0 0 2px var(--dc); }
+  .cell:focus { box-shadow:inset 0 0 0 2px var(--viola); }
+  tr.pausa td.pausa-cell { background:repeating-linear-gradient(135deg,#fff4d6 0 10px,#ffeab0 10px 20px); color:#8a5a00; }
+  .sost select.si { background:#c9f2dc; color:#0f6b3f; border-color:#7ed3a4; }
+  .riep { background:linear-gradient(135deg,#eefaf6,#eaf3ff); }
+  .riep .chip { border-color:#cfe4f6; } .riep .chip b { color:var(--c-att); } .riep .tot { color:#0f6b3f; }
+
+  .lista th { background:linear-gradient(135deg,var(--sc, var(--c-att)),color-mix(in srgb, var(--sc, var(--c-att)) 65%, #fff)); color:#fff; border:none; }
+  .lista tr.oggi td { background:#fff1c2; }
+  .st-Programmata { background:#dbe7ff !important; color:#1d4ed8; }
+  .st-Svolta { background:#c9f2dc !important; color:#0f6b3f; }
+  .st-Annullata { background:#ffd9d6 !important; color:#c0261e; }
+  .filters input[type=search], .filters select { border-color:#bfe9dc; }
+
+  @media (max-width:700px) {
+    .hero { padding:14px 14px 12px; border-radius:16px; }
+    .days button[data-d="0"] { --dc:var(--d0); } .days button[data-d="1"] { --dc:var(--d1); } .days button[data-d="2"] { --dc:var(--d2); }
+    .days button[data-d="3"] { --dc:var(--d3); } .days button[data-d="4"] { --dc:var(--d4); }
+    .days button { background:#fff; color:var(--dc); border:2px solid var(--dc); font-weight:600; }
+    .days button.on { background:var(--dc); color:#fff; font-weight:800; transform:translateY(-2px) scale(1.08); box-shadow:0 4px 10px rgba(0,0,0,.2); }
+    .daytitle { color:var(--dc); border-bottom:3px solid var(--dc); padding-bottom:4px; }
+    #orario td[data-c] { outline:2px solid var(--dc); outline-offset:-2px; }
+    #orario tr { border-color:#ddd5ff; }
+    .lista tr { border-color:#d3efe6; background:#fff; }
+    .addbar { background:#fff; border-top:3px solid var(--rosa); }
+  }
+
+  button.mini[data-act="del"] { background:#ffe3e0; color:#c0261e; border-color:#ffc0ba; min-width:30px; }
+
+  .hero select { display:inline-block; width:auto; min-height:34px; padding:2px 28px 2px 10px; font-weight:700; color:#fff; background:rgba(255,255,255,.22); border:1.5px solid rgba(255,255,255,.7); border-radius:999px; }
+  .hero select option { color:#1f2933; background:#fff; }
+
+
+  .modal { position:fixed; inset:0; z-index:100; background:rgba(30,20,60,.5); display:flex; align-items:center; justify-content:center; padding:16px; }
+  .mbox { background:#fff; border-radius:16px; padding:18px; width:min(94vw,440px); box-shadow:0 20px 50px rgba(0,0,0,.4); border-top:5px solid var(--rosa); }
+  .mbox h3 { margin:0 0 6px; font-size:17px; color:var(--viola); } .mbox p { margin:0 0 8px; line-height:1.45; }
+  .mbox button.pericolo { background:linear-gradient(135deg,#e5484d,#c0261e); }
+  .toast { position:fixed; left:50%; transform:translateX(-50%); bottom:24px; z-index:90; display:flex; align-items:center; gap:12px; background:#2b2144; color:#fff; padding:8px 8px 8px 16px; border-radius:999px; box-shadow:0 8px 24px rgba(0,0,0,.35); max-width:94vw; }
+  .toast button { min-height:34px; padding:2px 14px; border-radius:999px; background:var(--rosa); color:#fff; border:none; box-shadow:none; }
+  @media (max-width:700px) { .toast { bottom:calc(76px + env(safe-area-inset-bottom)); } }
+
+
+  /* profilo docente di sostegno */
+  body:not(.prof-sost) .solo-sost { display:none !important; }
+  body.prof-sost .solo-curr { display:none !important; }
+  #orario td.sost-si { box-shadow:inset 5px 0 0 #16a34a; background-image:linear-gradient(90deg, rgba(22,163,74,.14), transparent 70%); }
+  #orario td.sost-no { opacity:.8; }
+  #orario td.sost-si .sost select { font-weight:700; }
+  #profilo-f { grid-column:1 / -1; }
+  .riep .chip.ok { background:#c9f2dc; border-color:#7ed3a4; }
+  .riep .chip.manca { background:#fff1c2; border-color:#f0c85a; }
+  .riep .chip.troppe { background:#ffd9d6; border-color:#f3a39d; }
+  .riep .legenda { font-size:12px; color:var(--muted); margin-top:4px; }
+  .lista td.act textarea { min-height:56px; padding:6px 8px; line-height:1.4; border:1px solid transparent; background:transparent; overflow:hidden; }
+  .lista td.act textarea:focus { border-color:var(--sc, var(--acc)); background:#fffbe6; }
+  .lista td.act input[type=number] { text-align:center; }
+  @media (max-width:700px) { .lista td.act textarea { border-color:var(--line); background:#fff; } }
+
+
+  /* una sola sezione per volta */
+  .page.nascosta { display:none; }
+  body:not(.sez-attivita-sez) .addbar { display:none !important; }
+  .mini:disabled { opacity:.3; cursor:default; }
+  .tabs a { opacity:.62; transition:opacity .15s; }
+  .tabs a.attiva { opacity:1; box-shadow:0 0 0 3px #fff, 0 0 0 5px var(--sc-tab, #6d4aff); }
+
+  /* ottimizzazioni telefono Android */
+  .tabs { padding:4px 6px 6px; margin-left:-6px; margin-right:-6px; scroll-snap-type:x proximity; }
+  .tabs a { scroll-snap-align:center; min-height:36px; display:inline-flex; align-items:center; }
+  html { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
+  body { overscroll-behavior-y:contain; }
+  @media (max-width:700px) {
+    .mini-bar { display:grid; grid-template-columns:repeat(2, 36px); gap:5px; max-width:none; justify-content:center; }
+    button.mini { min-height:36px; min-width:36px; font-size:15px; padding:0; }
+    #orario td.ora { width:92px; }
+    body.sez-attivita-sez main { padding-bottom:84px; }
+    #orario[data-day="0"] td[data-c="0"], #orario[data-day="1"] td[data-c="1"], #orario[data-day="2"] td[data-c="2"],
+    #orario[data-day="3"] td[data-c="3"], #orario[data-day="4"] td[data-c="4"] { display:flex; flex-direction:column; }
+    #orario td[data-c] .cell { order:-1; min-height:44px; }
+    .sost { display:none; gap:6px; }
+    body.con-sostegno .sost { display:grid; grid-template-columns:auto 1fr; align-items:center; }
+    .sost select.mat { grid-column:1 / -1; width:100%; }
+    .sost select[data-sost] { width:auto; }
+    .sost input.sn { width:100%; min-width:0; }
+    .sost input.rg { grid-column:1 / -1; width:100%; min-height:36px; font-size:16px; }
+    .hero .as { display:flex; align-items:center; gap:8px; flex-wrap:nowrap; white-space:nowrap; font-size:12px; }
+    .hero .as select { width:auto !important; min-width:140px; flex:0 1 auto; }
+    .sost select { flex:0 0 auto; }
+    .sost select, .sost input.sn { min-height:36px; font-size:14px; }
+    input[type=text], input[type=date], input[type=search], input[type=number], select, textarea { font-size:16px; }
+    .check { min-height:46px; }
+  }
+
+
+  /* ---------- attività: grafica colorata ---------- */
+  #attivita-sez { background:linear-gradient(180deg,#ecfdf5 0,#fff 140px); }
+  #attivita-sez h2 { font-size:19px; }
+  #attivita-sez h2::before { content:"📅 "; }
+  #attivita-sez .bar button:not(.sec) { background:linear-gradient(135deg,#10b981,#0ea5b7); border:none; box-shadow:0 3px 8px rgba(16,185,129,.35); }
+  #attivita-sez .bar button.sec { border-color:#10b981; color:#0f766e; background:#ecfdf5; }
+  #attivita-sez .filters input[type=search], #attivita-sez .filters select { border-color:#99e6c9; background:#f4fffa; }
+  #cnt { background:#d1fae5; color:#065f46; padding:2px 10px; border-radius:999px; font-weight:700; }
+  .lista tbody tr { --st:#3b82f6; --stbg:#eaf2ff; }
+  .lista tbody tr[data-st="Programmata"] { --st:#3b82f6; --stbg:#eaf2ff; }
+  .lista tbody tr[data-st="Svolta"] { --st:#10b981; --stbg:#e6fbf1; }
+  .lista tbody tr[data-st="Annullata"] { --st:#ef4444; --stbg:#fdeceb; }
+  .lista tbody tr.scaduta { --st:#f97316; --stbg:#fff1e3; }
+  .lista tbody tr.oggi { --st:#f59e0b; --stbg:#fff4c9; }
+  #attivita td.act input[type=date] { font-weight:700; color:var(--st); background:#fff; border-color:var(--st); border-radius:999px; }
+  #attivita td.act select.cls { border-radius:999px; font-weight:600; border-color:#c7d2fe; }
+  #attivita td.act select.stsel { border-radius:999px; font-weight:700; text-align:center; color:#fff !important; border:none !important; background-color:var(--st) !important; }
+  #attivita td.act select.stsel option { color:#1f2933; background:#fff; }
+  #attivita tbody tr td { background:var(--stbg); border-bottom:2px solid #fff; }
+  #attivita tbody tr[data-st="Annullata"] td.act:nth-child(2) input { text-decoration:line-through; opacity:.7; }
+  #attivita tbody tr[data-st="Svolta"] td.act:nth-child(2) input { color:#047857; }
+  @media (max-width:700px) {
+    #attivita tbody tr { border:none !important; border-left:6px solid var(--st) !important; border-radius:14px; background:linear-gradient(135deg,var(--stbg),#fff 75%) !important; box-shadow:0 4px 12px rgba(30,41,59,.10); padding:10px 10px 4px; margin-bottom:12px; }
+    #attivita tbody tr td { background:none !important; border:none; }
+    #attivita td::before { color:var(--st); font-weight:700; text-transform:uppercase; letter-spacing:.4px; font-size:10px; }
+    #attivita td.act input[type=text], #attivita td.act select.cls { background:#fff; }
+    #attivita td.delc button { border-radius:999px; }
+  }
+
+
+  @media (max-width:700px) {
+    #orario tr:not(.pausa) { flex-wrap:wrap; }
+    #orario tr:not(.pausa) td.ora { width:100%; flex:1 1 100%; flex-direction:row; justify-content:space-between; gap:8px; padding:4px 8px; border-right:none; border-bottom:1px solid var(--line); text-align:left; }
+    #orario tr:not(.pausa) .mini-bar { display:flex; gap:5px; margin:0; max-width:none; flex-wrap:nowrap; }
+    #orario td.ora .oralabel { font-size:13px; font-weight:700; }
+    #orario td[data-c] { padding:8px; }
+  }
+
+
+  /* promemoria modificabili */
+  .pitem { flex-wrap:wrap; }
+  .pitem .prow { display:flex; gap:10px; align-items:center; width:100%; cursor:pointer; padding:2px 0; }
+  .pitem .prow .pt { flex:1 1 auto; }
+  .pitem .pt b { white-space:normal; overflow-wrap:anywhere; }
+  .pitem .pmod { flex:none; color:var(--muted); font-size:16px; }
+  .pitem .pnota { width:100%; margin:4px 0 2px 0; padding:8px 10px; background:#fffdf2; border-left:4px solid #f5c542; border-radius:8px; font-size:14px; line-height:1.45; white-space:pre-wrap; overflow-wrap:anywhere; color:#3b3a2f; }
+  .pitem .peditor { width:100%; display:grid; grid-template-columns:1fr; gap:8px; margin:8px 0 6px; padding:10px; background:#f6f3ff; border:1px solid #d9d0ff; border-radius:12px; }
+  .pitem.chiuso .peditor { display:none; }
+  .pitem .peditor label { display:flex; flex-direction:column; gap:3px; font-size:12px; color:var(--muted); font-weight:600; }
+  .pitem .peditor input, .pitem .peditor select, .pitem .peditor textarea { font-size:16px; width:100%; }
+  .pitem .peditor textarea { min-height:60px; resize:vertical; }
+  .pitem .pe-ok { justify-self:end; padding:8px 20px; border-radius:999px; }
+  .pitem:not(.chiuso) { background:#fbf9ff; border-radius:12px; }
+
+
+  /* ricreazione: riga sottile */
+  #orario tr.pausa td { padding-top:2px; padding-bottom:2px; }
+  #orario tr.pausa .pausatext { padding:2px 6px; font-size:13px; min-width:0; }
+  #orario tr.pausa .mini[data-act="add"], #orario tr.pausa .mini[data-act="pausa"] { display:none; }
+  #orario tr.pausa td.pausa-cell { background:repeating-linear-gradient(135deg,#fff4d6 0 8px,#ffeab0 8px 16px); }
+  @media (max-width:700px) {
+    #orario tr.pausa { flex-direction:row-reverse; flex-wrap:nowrap; align-items:center; margin-bottom:4px; }
+    #orario tr.pausa td.ora { width:auto; flex:0 0 auto; flex-direction:row; gap:6px; padding:2px 6px; border-right:none; border-left:1px solid var(--line); }
+    #orario tr.pausa td.ora .oralabel { font-size:11px; font-weight:600; white-space:nowrap; min-width:0; padding:2px; }
+    #orario tr.pausa .mini-bar { display:flex; gap:4px; }
+    #orario tr.pausa button.mini { min-height:30px; min-width:30px; font-size:13px; }
+    #orario tr.pausa td.pausa-cell { flex:1 1 auto; padding:0 6px; align-self:stretch; display:flex; align-items:center; justify-content:center; }
+  }
+
+  @media print {
+    body { background:#fff; } .noprint, .del, .days, .daytitle, .addbar, .tabs, .mini-bar { display:none !important; }
+    .page { border:none; padding:0; } .page.nascosta { display:block; } main { padding:0; }
+    * { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    input, select, textarea { appearance:none; border:none !important; }
+    #orario td[data-c] { display:table-cell !important; background:#fff !important; }
+    #orario th[data-c] { background:var(--soft) !important; color:var(--ink) !important; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header class="hero">
+    <h1 id="heroTitolo">Agenda del docente di sostegno</h1>
+    <div class="as">Anno scolastico <select id="annoSel" aria-label="Anno scolastico"></select></div>
+  </header>
+
+  <nav class="tabs noprint">
+    <a href="#oggi" style="background:var(--c-oggi)">Promemoria</a><a href="#dati" style="background:var(--c-dati)">Dati</a><a href="#orario-sez" style="background:var(--c-orario)">Orario</a><a href="#attivita-sez" style="background:var(--c-att)">Attività</a><a href="#appunti-sez" style="background:var(--c-app)">Appunti</a><a href="#backup" style="background:var(--c-bk)">Backup</a>
+  </nav>
+
+  <section class="page noprint" id="oggi">
+    <h2>Promemoria <small>impegni in arrivo</small></h2>
+    <div id="savewarn" class="warn" hidden>⚠️ Il salvataggio automatico non è disponibile in questo browser. Usa spesso <a href="#backup">Esporta backup</a>.</div>
+    <div id="bkwarn" class="warn" hidden></div>
+    <div id="prom"></div>
+  </section>
+
+  <section class="page" id="dati">
+    <h2>Dati personali <small>ex libris</small></h2>
+    <div class="fields">
+      <label class="f" id="profilo-f">Profilo<select id="profilo"><option value="sostegno">Docente di sostegno</option><option value="curr">Docente curricolare (con eventuale sostegno in classe)</option></select></label>
+      <label class="f" id="docente-f">Docente<input type="text" id="docente" data-save></label>
+      <label class="f">Scuola / Plesso<input type="text" id="scuola" data-save></label>
+      <label class="f solo-sost">Ore di cattedra settimanali<input type="number" id="cattedra" min="0" step="0.5" inputmode="decimal" data-save></label>
+      <label class="f" style="grid-column:1 / -1">Classi della scuola (separate da virgola)<input type="text" id="classi" data-save placeholder="es. 1A, 2A, 3A, 1B, 2B, 3B"></label>
+      <label class="f solo-curr">Classe / Sezione<input type="text" id="classe" data-save></label>
+      <label class="f solo-curr" id="sostegno-f">Docente di sostegno<input type="text" id="sostegno" data-save></label>
+    </div>
+    <h3>Anni scolastici</h3>
+    <p class="hint noprint" style="margin-top:0">Ogni anno ha il suo orario, le sue attività e i suoi appunti. Cambia anno dal menu in alto.</p>
+    <div class="bar noprint">
+      <button class="sec" id="annoNuovo">+ Nuovo anno (vuoto)</button>
+      <button class="sec" id="annoCopia">+ Nuovo anno copiando l'orario</button>
+      <button class="sec" id="annoRinomina">Rinomina</button>
+      <button class="del" id="annoElimina">Elimina anno</button>
+    </div>
+  </section>
+
+  <section class="page" id="orario-sez">
+    <h2>Orario settimanale <small>settimana tipo</small></h2>
+    <div class="bar noprint solo-curr">
+      <label class="check"><input type="checkbox" id="toggleSost"> Prevedi la presenza del docente di sostegno</label>
+    </div>
+    <div class="bar noprint">
+      <button class="sec" id="addOra">+ Ora</button>
+      <button class="sec" id="addPausa">+ Pausa / ricreazione</button>
+    </div>
+    <div class="days noprint" id="days"></div>
+    <div class="daytitle noprint" id="daytitle"></div>
+    <div class="wrap orwrap"><table id="orario" data-day="0"></table></div>
+    <h3 id="noteLabel">Note del giorno</h3>
+    <textarea id="noteDay" rows="4" placeholder="Appunti per questo giorno…"></textarea>
+    <p class="hint noprint solo-sost">Per ogni ora scegli la materia, scrivi se vuoi una riga libera (classe, note), imposta "Sostegno?" su Presente o Assente per evidenziare la tua presenza in quell'ora (le ore segnate Assente non entrano nel riepilogo), poi scrivi il nome del docente curricolare in quell'ora (i nomi già usati vengono suggeriti; per più docenti separa con la virgola). La cella prende il colore del docente. Tocca le ore a sinistra per cambiarle; usa ▲ ▼ per spostare una riga, con ＋ e ☕ inserisci un'ora o una pausa subito sotto, con 🗑 la elimini. Il riepilogo mostra le ore per ogni docente e per giorno, con il totale delle ore di servizio.</p>
+    <p class="hint noprint solo-curr">Tocca le ore a sinistra per cambiarle; usa ▲ ▼ per spostare una riga, con ＋ e ☕ inserisci un'ora o una pausa subito sotto, con 🗑 la elimini. Per un giorno con meno ore lascia vuote le celle. Con il sostegno attivo, sotto ogni ora scegli Sì/No e scrivi alunno o docente. Le celle con la stessa materia hanno lo stesso evidenziatore.</p>
+    <datalist id="dlAlunni"></datalist>
+    <datalist id="dlAttivita"></datalist>
+    <div class="riep" id="riepilogo" hidden></div>
+    <div class="bar noprint" style="margin-top:10px">
+      <button class="sec" onclick="window.print()">Stampa / PDF</button>
+      <button class="sec" onclick="resetAll()">Svuota tutto</button>
+    </div>
+  </section>
+
+  <section class="page" id="attivita-sez">
+    <h2>Scadenziario delle attività <small>appuntamenti e impegni</small></h2>
+    <div class="bar noprint">
+      <button class="desk-only" onclick="nuovaAttivita(false)">+ Aggiungi attività</button>
+      <button class="sec desk-only" onclick="sortRows()">Ordina per data</button>
+      <button class="sec solo-sost" onclick="aggiungiScadenzePEI()">+ Scadenze tipiche del PEI</button>
+    </div>
+    <div class="filters noprint">
+      <input type="search" id="q" placeholder="Cerca attività o classe…" aria-label="Cerca">
+      <select id="fstato" aria-label="Filtra per stato"><option value="">Tutti gli stati</option><option>Programmata</option><option>Svolta</option><option>Annullata</option></select>
+      <label class="check"><input type="checkbox" id="fnascondi" checked> Nascondi le attività svolte <span id="nSvolte"></span></label>
+      <span id="cnt"></span>
+    </div>
+    <div class="wrap">
+      <table id="attivita" class="lista">
+        <thead><tr><th style="width:150px">Data</th><th>Attività</th><th style="width:200px">Classe / Gruppo</th><th style="width:150px">Stato</th><th style="width:260px">Note</th><th class="noprint" style="width:50px"></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="hint noprint solo-sost">Scadenze indicative (D.I. 182/2020 modificato dal D.I. 153/2023): PEI definitivo di norma entro il 31 ottobre, almeno una verifica intermedia tra novembre e aprile, verifica finale e proposte di risorse entro il 30 giugno. Controlla le indicazioni della tua scuola.</p>
+    <p class="hint noprint">Le attività iniziali sono esempi con date indicative: modificale o eliminale. Le attività di oggi sono in giallo, le date scadute ancora "Programmata" in rosso.</p>
+  </section>
+
+  <section class="page" id="appunti-sez">
+    <h2>Appunti <small>pagina libera</small></h2>
+    <textarea id="appunti" rows="12" placeholder="Note, idee, cose da ricordare…"></textarea>
+  </section>
+
+  <section class="page noprint" id="backup">
+    <h2>Backup e installazione</h2>
+    <p id="bkstato"></p>
+    <div class="bar">
+      <button id="bkEsporta">Esporta backup</button>
+      <button class="sec" id="bkCondividi" hidden>Condividi</button>
+      <button class="sec" id="bkImporta">Importa backup</button>
+      <input type="file" id="bkFile" accept=".json,application/json" hidden>
+    </div>
+    <p class="hint">I dati sono salvati solo in questo browser: se cancelli i dati di Chrome o cambi telefono, vanno persi. Esporta un backup ogni tanto (contiene tutti gli anni scolastici) e conservalo in un posto sicuro (Drive, e-mail, WhatsApp). Per ripristinarlo, o per usare l'agenda su un altro dispositivo, usa "Importa backup".</p>
+    <h3>Installa come app</h3>
+    <p class="hint" style="margin-top:0">Su Android apri il file con Chrome, poi menu ⋮ → "Aggiungi a schermata Home" (o "Installa app" se compare). Se questa agenda è pubblicata online (https) con i suoi file, Chrome offre "Installa app" e la apre a schermo intero, anche senza connessione. Aperta come semplice file dalla memoria del telefono, Chrome non può creare l'icona: in quel caso pubblicala online.</p>
+    <div class="bar"><button id="btnInstall" hidden>Installa app</button></div>
+  </section>
+</main>
+
+<div id="modal" class="modal noprint" hidden>
+  <div class="mbox" role="dialog" aria-modal="true" aria-labelledby="mTit">
+    <h3 id="mTit"></h3><p id="mTxt"></p>
+    <input type="text" id="mInp" hidden>
+    <div class="bar" style="margin:12px 0 0;justify-content:flex-end"><button class="sec" id="mNo">Annulla</button><button id="mOk">OK</button></div>
+  </div>
+</div>
+<div id="toast" class="toast noprint" hidden><span id="toastMsg"></span><button id="toastBtn" class="sec">Annulla</button></div>
+
+<div class="addbar noprint">
+  <button onclick="nuovaAttivita(true)">+ Attività</button>
+  <button class="sec" onclick="sortRows()">Ordina per data</button>
+</div>
+
+<script>
+const GIORNI = ["Lunedì","Martedì","Mercoledì","Giovedì","Venerdì"];
+const BREVI = ["Lun","Mar","Mer","Gio","Ven"];
+const ORE0 = ["1ª 08:00–09:00","2ª 09:00–10:00","3ª 10:00–11:00","4ª 11:00–12:00","5ª 12:00–13:00","6ª 13:00–14:00"];
+const KEY = "orario_docente_v1", KEY_BK = "orario_docente_backup", META = "orario_docente_meta";
+const KD = a => "orario_docente_a:" + a;
+const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } };
+let meta, anno;
+const OGGI = (() => { const w = new Date().getDay(); return w >= 1 && w <= 5 ? w - 1 : -1; })();
+const STATI = ["Programmata","Svolta","Annullata"];
+const COL_STATO = { Programmata:"#3f77b5", Svolta:"#3f8f6b", Annullata:"#b8493f" };
+const ESEMPI = [
+  ["2026-11-18","Consiglio di classe","Tutte le classi","Programmata"],
+  ["2026-11-25","Colloqui generali con le famiglie","Tutte le classi","Programmata"],
+  ["2026-12-03","Verifica scritta di italiano","3A","Programmata"],
+  ["2026-12-10","Riunione GLO","Alunno con sostegno","Programmata"],
+  ["2026-12-18","Festa di Natale","Tutta la scuola","Programmata"],
+  ["2027-01-12","Uscita didattica","2B","Programmata"],
+  ["2027-01-28","Scrutini primo quadrimestre","Tutte le classi","Programmata"]
+];
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
+const pad = n => String(n).padStart(2, "0");
+const toDate = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+const hueOf = t => { let h = 0; for (const ch of t) h = (h * 31 + ch.charCodeAt(0)) % 360; return h; };
+const siglasDa = x => String(x || "").split(/[,;+\/&]|\s+e\s+/i).map(v => v.trim()).filter(Boolean);
+const isSost = () => document.body.classList.contains("prof-sost");
+const num = v => { const n = parseFloat(String(v).replace(",", ".")); return isFinite(n) ? n : 0; };
+const MATERIE = ["Italiano","Storia","Geografia","Matematica","Scienze","Inglese","Francese","Spagnolo","Tedesco","Tecnologia","Arte e immagine","Musica","Strumento musicale","Scienze motorie","Religione cattolica","Attività alternativa","Educazione civica","Approfondimento","Sostegno","Altro"];
+const vuota = () => ({ t:"", s:"", n:"", m:"", r:"" });
+const rigaVuota = () => GIORNI.map(vuota);
+let curDay = OGGI >= 0 ? OGGI : 0;
+let noteDays = ["","","","",""];
+
+/* ---------- utilità ore ---------- */
+const RE_ORA = /(\d{1,2})[:.](\d{2})\s*[–—-]\s*(\d{1,2})[:.](\d{2})/;
+function durata(label) {                      // minuti, 60 se non riconosciuta
+  const m = RE_ORA.exec(label || "");
+  if (!m) return 60;
+  const d = (+m[3] * 60 + +m[4]) - (+m[1] * 60 + +m[2]);
+  return d > 0 ? d : 60;
+}
+const fmtMin = m => m ? (Math.floor(m / 60) ? Math.floor(m / 60) + " h" : "") + (m % 60 ? (Math.floor(m / 60) ? " " : "") + (m % 60) + " min" : "") : "0 h";
+const hhmm = t => pad(Math.floor(t / 60) % 24) + ":" + pad(t % 60);
+function prossimaEtichetta(ore) {
+  const norm = ore.filter(o => !o.p);
+  const n = norm.length + 1;
+  for (let i = ore.length - 1; i >= 0; i--) {
+    const m = RE_ORA.exec(ore[i].l);
+    if (m) { const fine = +m[3] * 60 + +m[4]; return `${n}ª ${hhmm(fine)}–${hhmm(fine + 60)}`; }
+  }
+  return `${n}ª`;
+}
+
+/* ---------- evidenziatore ---------- */
+function colorCell(el) {
+  const td = el.closest("td"), sn = td && td.querySelector(".sn");
+  let key = el.innerText.trim().toLowerCase();
+  if (sn && siglasDa(sn.value).length) key = siglasDa(sn.value)[0].toLowerCase();
+  td.style.background = key ? `hsl(${hueOf(key)},80%,88%)` : "";
+}
+const sostColor = s => {
+  s.className = s.value === "Sì" ? "si" : s.value === "No" ? "no" : "";
+  const td = s.closest("td"); if (td) { td.classList.toggle("sost-si", s.value === "Sì"); td.classList.toggle("sost-no", s.value === "No"); }
+};
+function aggiornaPlaceholder() { $$(".sn").forEach(e => { e.placeholder = isSost() ? "Docente" : "Docente / alunno"; }); }
+
+/* ---------- orario ---------- */
+function renderOrario(s) {
+  const head = GIORNI.map((g, c) => `<th data-c="${c}" class="${c === OGGI ? "oggi" : ""}" style="--dc:var(--d${c})">${g}</th>`).join("");
+  const ctrl = `<div class="mini-bar noprint"><button class="mini" data-act="up" aria-label="Sposta su">▲</button><button class="mini" data-act="down" aria-label="Sposta giù">▼</button><button class="mini" data-act="add" aria-label="Inserisci un'ora sotto" title="Inserisci un'ora sotto">＋</button><button class="mini" data-act="pausa" aria-label="Inserisci una pausa sotto" title="Inserisci una pausa sotto">☕</button><button class="mini" data-act="del" aria-label="Elimina questa riga" title="Elimina questa riga">🗑</button></div>`;
+  const body = s.ore.map((o, r) => {
+    const ora = `<td class="ora"><div class="oralabel" contenteditable="true" aria-label="Ora ${r + 1}"></div>${ctrl}</td>`;
+    if (o.p) return `<tr class="pausa">${ora}<td class="pausa-cell" colspan="${GIORNI.length}"><div class="pausatext" contenteditable="true" aria-label="Pausa"></div></td></tr>`;
+    return `<tr>${ora}` + GIORNI.map((g, c) => `<td data-c="${c}" style="--dc:var(--d${c})"><div class="cell" contenteditable="true" aria-label="${g} ora ${r + 1}"></div>
+      <div class="sost"><select class="mat" aria-label="Materia ${g} ora ${r + 1}"><option value="">Materia…</option>${MATERIE.map(m => `<option>${m}</option>`).join("")}</select><select data-sost aria-label="Sostegno ${g} ora ${r + 1}"><option value="">Sostegno?</option><option value="Sì">✔ Presente</option><option value="No">✖ Assente</option></select><input type="text" class="sn" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="next" list="dlAlunni" placeholder="Docente" aria-label="Docente curricolare ${g} ora ${r + 1}"><input type="text" class="rg" maxlength="120" autocomplete="off" enterkeyhint="done" placeholder="Classe / note (riga libera)" aria-label="Riga libera ${g} ora ${r + 1}"></div></td>`).join("") + "</tr>";
+  }).join("");
+  $("#orario").innerHTML = `<thead><tr><th>Ora</th>${head}</tr></thead><tbody>${body}</tbody>`;
+  $$("#orario tbody tr").forEach((tr, r) => {
+    tr.querySelector(".oralabel").innerText = s.ore[r].l;
+    if (s.ore[r].p) { tr.querySelector(".pausatext").innerText = s.ore[r].pt; return; }
+    tr.querySelectorAll("td[data-c]").forEach((td, c) => {
+      const v = (s.cells[r] && s.cells[r][c]) || vuota();
+      const cell = td.querySelector(".cell"); cell.innerText = v.m || v.t;
+      const sel = td.querySelector("[data-sost]"); sel.value = v.s; sostColor(sel);
+      td.querySelector(".sn").value = v.n; td.querySelector(".rg").value = v.r || "";
+      { const mt = td.querySelector(".mat"); mt.value = v.m || (MATERIE.includes((v.t || "").trim()) ? v.t.trim() : ""); mt.dataset.prev = mt.value; }
+      colorCell(cell);
+    });
+  });
+  { const bs = $$("#orario tbody tr"); if (bs.length) { const u = bs[0].querySelector('[data-act="up"]'), g = bs[bs.length - 1].querySelector('[data-act="down"]'); if (u) u.disabled = true; if (g) g.disabled = true; } }
+  aggiornaPlaceholder();
+  setDay(curDay);
+}
+function setDay(i) {
+  curDay = i;
+  $("#orario").dataset.day = i;
+  $$("#days button").forEach(b => b.classList.toggle("on", +b.dataset.d === i));
+  $$("#orario th[data-c], #orario td[data-c]").forEach(e => e.classList.toggle("sel", +e.dataset.c === i));
+  const t = $("#daytitle");
+  t.textContent = GIORNI[i];
+  t.style.setProperty("--dc", `var(--d${i})`);
+  $("#noteLabel").textContent = "Note di " + GIORNI[i];
+  $("#noteDay").value = noteDays[i] || "";
+}
+function mutate(fn) { const s = collect(); fn(s); renderOrario(s); riepilogo(); save(); }
+
+function riepilogo() {
+  const box = $("#riepilogo"), sost = isSost();
+  if (!sost && !$("#toggleSost").checked) { box.hidden = true; return; }
+  const s = collect(), mp = mappaDocenti();
+  const perGiorno = GIORNI.map(() => 0), perChi = {};
+  let servizio = 0;
+  s.ore.forEach((o, r) => {
+    if (o.p) return;
+    const m = durata(o.l);
+    s.cells[r].forEach((c, g) => {
+      const sig = siglasDa(c.n);
+      if (sost ? (c.s === "Sì" || (c.s !== "No" && (c.t.trim() || sig.length || (c.r || "").trim()))) : c.s === "Sì") { perGiorno[g] += m; servizio += m; }
+      else return;
+      sig.forEach(x => { const k = x.toLowerCase(); (perChi[k] = perChi[k] || { nome:x, m:0 }).m += m; });
+    });
+  });
+  const chip = (txt, cls = "") => `<span class="chip ${cls}">${txt}</span>`;
+  let h = `<h3>${sost ? "Riepilogo ore" : "Riepilogo ore di sostegno"}</h3>`;
+  if (!servizio) h += `<div class="vuoto">${sost ? "Nessuna ora programmata: scrivi attività o docente nelle celle dell'orario." : 'Nessuna ora di sostegno indicata: scegli "Sì" nelle ore in cui il docente di sostegno è presente.'}</div>`;
+  else {
+    if (sost) {
+      const doc = Object.values(perChi).sort((x, y) => y.m - x.m);
+      if (doc.length) h += `<h3>Ore con ciascun docente curricolare</h3><div class="rg">${doc.map(x => chip(`${esc(x.nome)}${mp[x.nome.toLowerCase()] && mp[x.nome.toLowerCase()].materia ? " · " + esc(mp[x.nome.toLowerCase()].materia) : ""}: <b>${fmtMin(x.m)}</b>`)).join("")}</div>`;
+    } else {
+      const chi = Object.values(perChi).sort((x, y) => y.m - x.m);
+      if (chi.length) h += `<div class="rg">${chi.map(x => chip(`${esc(x.nome)}: <b>${fmtMin(x.m)}</b>`)).join("")}</div>`;
+    }
+    h += `<div class="rg">${GIORNI.map((g, i) => [BREVI[i], perGiorno[i]]).filter(x => x[1]).map(x => chip(`${x[0]}: <b>${fmtMin(x[1])}</b>`)).join("")}</div>`;
+    const catt = sost ? Math.round(num($("#cattedra").value) * 60) : 0;
+    h += `<div class="tot">${sost ? "Ore di servizio programmate" : "Totale settimanale"}: ${fmtMin(servizio)}${catt ? " su " + fmtMin(catt) + " di cattedra" : ""}</div>`;
+  }
+  box.innerHTML = h; box.hidden = false;
+}
+
+/* ---------- attività ---------- */
+function addRow(v, scroll) {
+  v = v || ["", "", "", "Programmata"];
+  const tr = document.createElement("tr");
+  tr.innerHTML = `<td class="act" data-label="Data"><input type="date" value="${v[0]}"></td>
+    <td class="act" data-label="Attività (scegli o scrivi)"><input type="text" list="dlAttivita" autocomplete="off" placeholder="Scegli dall'elenco o scrivi" value="${esc(v[1])}"></td>
+    <td class="act" data-label="Classe / Gruppo"><select class="cls" data-v="${esc(v[2])}"></select></td>
+    <td class="act" data-label="Stato"><select class="stsel">${STATI.map(x => `<option${x === v[3] ? " selected" : ""}>${x}</option>`).join("")}</select></td>
+    <td class="act" data-label="Note / dettagli"><textarea class="nota" rows="2" placeholder="Altro testo, dettagli, luogo, orario…">${esc(v[4] || "")}</textarea></td>
+    <td class="noprint delc"><button class="del" aria-label="Elimina attività">✕</button></td>`;
+  $("#attivita tbody").appendChild(tr);
+  riempiClasse(tr.querySelector(".cls"), v[2]);
+  stato(tr);
+  if (scroll) { tr.scrollIntoView({ behavior:"smooth", block:"center" }); tr.querySelector("input").focus(); }
+}
+function nuovaAttivita(scroll) {
+  $("#q").value = ""; $("#fstato").value = "";
+  addRow(null, scroll); refreshAtt(); save();
+}
+function oggiIso() { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
+const ATTIVITA_TIPICHE = ["Riunione GLO","GLO: approvazione e firma del PEI definitivo","GLO: verifica intermedia del PEI","GLO: verifica finale del PEI e proposte di risorse","Stesura del PEI","Aggiornamento del Profilo di funzionamento","Consiglio di classe","Collegio dei docenti","Programmazione didattica","Colloquio con la famiglia","Incontro con l'équipe / ASP","Incontro con l'assistente educativo","Verifica scritta","Verifica orale","Verifica personalizzata","Uscita didattica","Scrutinio","Consegna della relazione finale","Consegna della documentazione","Ricevimento genitori","Formazione / aggiornamento","Laboratorio"];
+const GRUPPI = ["Tutte le classi","Tutta la scuola","Classi prime","Classi seconde","Classi terze","Alunno con sostegno","Docenti","Genitori","Altro"];
+function elencoClassi() {
+  const c = ($("#classi").value || "").split(/[,;\n]+/).map(x => x.trim()).filter(Boolean);
+  if (c.length) return c;
+  const o = []; ["1","2","3"].forEach(n => ["A","B","C","D"].forEach(l => o.push(n + l))); return o;
+}
+function riempiClasse(sel, val) {
+  const cur = val !== undefined ? val : sel.value, cl = elencoClassi();
+  const extra = cur && !GRUPPI.includes(cur) && !cl.includes(cur) ? `<option>${esc(cur)}</option>` : "";
+  sel.innerHTML = `<option value="">Classe / gruppo…</option><optgroup label="Gruppi">${GRUPPI.map(x => `<option>${x}</option>`).join("")}</optgroup><optgroup label="Classi">${cl.map(x => `<option>${esc(x)}</option>`).join("")}</optgroup>${extra}<option value="__m">✎ Altro (scrivi a mano)…</option>`;
+  sel.value = cur || ""; sel.dataset.prev = sel.value;
+}
+async function classeManuale(sel) {
+  const prev = sel.dataset.prev || "";
+  const r = await dialogo({ titolo:"Classe o gruppo", testo:"Scrivi la classe o il gruppo (per esempio 2C, Gruppo laboratorio).", input:"", ok:"Conferma" });
+  const n = (r || "").trim();
+  if (n) riempiClasse(sel, n); else sel.value = prev;
+  sel.dispatchEvent(new Event("change", { bubbles:true }));
+}
+function riempiAttivita() { $("#dlAttivita").innerHTML = ATTIVITA_TIPICHE.map(x => `<option value="${esc(x)}">`).join(""); }
+function aggiornaClassi() { $$("#attivita .cls").forEach(s => riempiClasse(s)); }
+function stato(tr) {
+  const s = tr.querySelector(".stsel"), d = tr.querySelector("input").value, oggi = oggiIso(), cl = tr.querySelector(".cls");
+  s.className = "stsel st-" + s.value; tr.dataset.st = s.value;
+  cl.style.background = cl.value ? `hsl(${hueOf(cl.value.toLowerCase())},85%,90%)` : "";
+  tr.style.borderLeftColor = COL_STATO[s.value];
+  tr.classList.toggle("oggi", !!d && d === oggi && s.value === "Programmata");
+  tr.classList.toggle("scaduta", !!d && d < oggi && s.value === "Programmata");
+}
+function sortRows() {
+  const tb = $("#attivita tbody");
+  [...tb.children].sort((a, b) => (a.querySelector("input").value || "9999").localeCompare(b.querySelector("input").value || "9999"))
+    .forEach(r => tb.appendChild(r));
+  save();
+}
+function attData() {
+  return $$("#attivita tbody tr").map(tr => {
+    const i = tr.querySelectorAll("input");
+    return [i[0].value, i[1].value, tr.querySelector(".cls").value, tr.querySelector(".stsel").value, tr.querySelector(".nota").value];
+  });
+}
+function applyFilter() {
+  const q = $("#q").value.trim().toLowerCase(), fs = $("#fstato").value, nh = $("#fnascondi").checked;
+  let shown = 0, tot = 0;
+  $$("#attivita tbody tr").forEach(tr => {
+    const i = tr.querySelectorAll("input"), st = tr.querySelector(".stsel").value;
+    const ok = (!q || (i[1].value + " " + tr.querySelector(".cls").value + " " + tr.querySelector(".nota").value).toLowerCase().includes(q)) && (!fs || st === fs) && !(nh && st === "Svolta" && fs !== "Svolta");
+    tr.hidden = !ok; tot++; if (ok) shown++;
+  });
+  const svolte = $$("#attivita .stsel").filter(x => x.value === "Svolta").length;
+  $("#nSvolte").textContent = svolte ? `(${svolte})` : "";
+  $("#cnt").textContent = tot && shown !== tot ? `${shown} di ${tot}` : (tot ? `${tot} attività` : "");
+}
+function refreshAtt() { $$("#attivita tbody tr").forEach(stato); applyFilter(); renderProm(); }
+
+/* ---------- docenti curricolari (suggerimenti) ---------- */
+/* abbinamento docente <-> materia, ricavato dalle celle già compilate */
+function mappaDocenti() {
+  const cnt = {};
+  $$("#orario td[data-c]").forEach(td => {
+    const n = td.querySelector(".sn").value.trim(), m = td.querySelector(".mat").value;
+    if (!n) return;
+    const k = n.toLowerCase(), o = cnt[k] = cnt[k] || { nome:n, mat:{} };
+    if (m) o.mat[m] = (o.mat[m] || 0) + 1;
+  });
+  Object.values(cnt).forEach(o => { o.materia = Object.keys(o.mat).sort((x, y) => o.mat[y] - o.mat[x])[0] || ""; });
+  return cnt;
+}
+function aggiornaDocenti() {
+  const mp = mappaDocenti(), nomi = Object.values(mp).sort((a, b) => a.nome.localeCompare(b.nome));
+  $("#dlAlunni").innerHTML = nomi.map(x => `<option value="${esc(x.nome)}"${x.materia ? ` label="${esc(x.materia)}"` : ""}>`).join("");
+}
+
+/* ---------- scadenze tipiche del PEI ---------- */
+function aggiungiScadenzePEI() {
+  const m = /(\d{4})/.exec(anno), d = new Date(), y = m ? +m[1] : (d.getMonth() >= 8 ? d.getFullYear() : d.getFullYear() - 1);
+  const R = [
+    [`${y}-10-31`, "GLO: approvazione e firma del PEI definitivo (di norma entro)", "Alunno con sostegno", "Programmata"],
+    [`${y + 1}-04-30`, "GLO: verifica intermedia del PEI (tra novembre e aprile)", "Alunno con sostegno", "Programmata"],
+    [`${y + 1}-06-30`, "GLO: verifica finale del PEI e proposte di risorse (sostegno e assistenza) per l'anno successivo", "Alunno con sostegno", "Programmata"]
+  ];
+  const esistenti = new Set(attData().map(a => a[0] + "|" + a[1]));
+  let n = 0;
+  R.forEach(r => { if (!esistenti.has(r[0] + "|" + r[1])) { addRow(r); n++; } });
+  sortRows(); refreshAtt(); save();
+  toast(n ? `Aggiunte ${n} scadenze` : "Le scadenze tipiche sono già presenti");
+}
+
+/* ---------- profilo ---------- */
+function applicaProfilo() {
+  const sost = $("#profilo").value === "sostegno";
+  document.body.classList.toggle("prof-sost", sost);
+  document.body.classList.toggle("con-sostegno", sost || $("#toggleSost").checked);
+  const t = sost ? "Agenda del docente di sostegno" : "Agenda del docente";
+  $("#heroTitolo").textContent = t; document.title = t;
+  aggiornaPlaceholder();
+  if (typeof mostra === "function") mostra((document.body.className.match(/sez-(\S+)/) || [])[1]);
+}
+
+/* ---------- promemoria ---------- */
+function renderProm() {
+  const oggi = new Date(); oggi.setHours(0, 0, 0, 0);
+  const aperti = new Set($$("#prom .pitem:not(.chiuso)").map(e => e.dataset.i));
+  const items = attData().map((a, i) => ({ i, d:a[0], t:a[1], c:a[2], st:a[3], n:a[4] || "", diff:a[0] ? Math.round((toDate(a[0]) - oggi) / 864e5) : 0 }))
+    .filter(a => a.d && a.st === "Programmata")
+    .sort((a, b) => a.d.localeCompare(b.d));
+  const fmtD = s => toDate(s).toLocaleDateString("it-IT", { weekday:"short", day:"numeric", month:"short" });
+  const riga = x => {
+    const lab = x.diff < 0 ? `${-x.diff} g fa` : x.diff === 0 ? "Oggi" : x.diff === 1 ? "Domani" : `tra ${x.diff} g`;
+    const cls = x.diff < 0 ? "scaduta" : x.diff === 0 ? "oggi" : "";
+    return `<div class="pitem ${cls} chiuso" data-i="${x.i}">
+      <div class="prow" role="button" tabindex="0" aria-label="Modifica attività"><span class="pb">${lab}</span><span class="pt"><b>${esc(x.t || "(senza titolo)")}</b><small>${fmtD(x.d)}${x.c ? " · " + esc(x.c) : ""}</small></span><span class="pmod" aria-hidden="true">✎</span></div>
+      ${x.n.trim() ? `<div class="pnota">${esc(x.n)}</div>` : ""}
+      <div class="peditor noprint">
+        <label>Data<input type="date" class="pe-d" value="${x.d}"></label>
+        <label>Attività (scegli o scrivi)<input type="text" class="pe-t" list="dlAttivita" autocomplete="off" value="${esc(x.t)}"></label>
+        <label>Classe / gruppo<select class="pe-c cls"></select></label>
+        <label>Stato<select class="pe-s">${STATI.map(v => `<option${v === x.st ? " selected" : ""}>${v}</option>`).join("")}</select></label>
+        <label>Note / altro testo<textarea class="pe-n" rows="3" placeholder="Aggiungi dettagli, luogo, orario, persone coinvolte…">${esc(x.n)}</textarea></label>
+        <button type="button" class="pe-ok">Fatto</button>
+      </div></div>`;
+  };
+  const scad = items.filter(x => x.diff < 0), prox = items.filter(x => x.diff >= 0 && x.diff <= 14);
+  let h = "";
+  if (scad.length) h += `<h3>Da sistemare (data passata, ancora "Programmata")</h3>` + scad.map(riga).join("");
+  h += `<h3>Oggi e prossimi 14 giorni</h3>` + (prox.length ? prox.map(riga).join("") : `<div class="vuoto">Nessun impegno in programma.</div>`);
+  h += `<p class="hint">Tocca un impegno per modificarlo o aggiungere altro testo.</p>`;
+  $("#prom").innerHTML = h;
+  $$("#prom .pe-c").forEach(sel => { const it = sel.closest(".pitem"), x = items.find(v => String(v.i) === it.dataset.i); riempiClasse(sel, x ? x.c : ""); });
+  aperti.forEach(i => { const e = $(`#prom .pitem[data-i="${i}"]`); if (e) e.classList.remove("chiuso"); });
+}
+
+/* ---------- stato complessivo, salvataggio ---------- */
+function collect() {
+  const ore = [], cells = [];
+  $$("#orario tbody tr").forEach(tr => {
+    const p = tr.classList.contains("pausa");
+    ore.push({ l:tr.querySelector(".oralabel").innerText.trim(), p, pt:p ? tr.querySelector(".pausatext").innerText.trim() : "" });
+    cells.push(p ? rigaVuota() : [...tr.querySelectorAll("td[data-c]")].map(td => ({
+      t:td.querySelector(".cell").innerText, s:td.querySelector("[data-sost]").value, n:td.querySelector(".sn").value, m:td.querySelector(".mat").value, r:td.querySelector(".rg").value })));
+  });
+  return {
+    v:2,
+    f:Object.fromEntries($$("[data-save]").map(e => [e.id, e.value])),
+    toggle:$("#toggleSost").checked,
+    profilo:$("#profilo").value,
+    ore, cells,
+    att:attData(),
+    note:noteDays.slice(),
+    appunti:$("#appunti").value
+  };
+}
+let timer;
+function idbApri() {
+  return new Promise((ok, no) => {
+    const r = indexedDB.open("agenda_docente_specchio", 1);
+    r.onupgradeneeded = () => r.result.createObjectStore("kv");
+    r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error);
+  });
+}
+let specchioTimer;
+function specchia() {
+  if (SPECCHIO.attesa || typeof indexedDB === "undefined") return;
+  clearTimeout(specchioTimer);
+  specchioTimer = setTimeout(async () => {
+    try {
+      const chiavi = {};
+      for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith("orario_docente_")) chiavi[k] = localStorage.getItem(k); }
+      if (!chiavi[META]) return;                                   // mai sovrascrivere la copia con uno stato vuoto
+      const db = await idbApri();
+      db.transaction("kv", "readwrite").objectStore("kv").put({ t:new Date().toISOString(), chiavi }, "snapshot");
+    } catch (e) {}
+  }, 400);
+}
+async function ripristinaDaSpecchio() {
+  if (!SPECCHIO.attesa) return;
+  let snap = null;
+  try {
+    const db = await Promise.race([idbApri(), new Promise((_, no) => setTimeout(no, 2500))]);
+    snap = await new Promise(ok => { const q = db.transaction("kv").objectStore("kv").get("snapshot"); q.onsuccess = () => ok(q.result); q.onerror = () => ok(null); });
+  } catch (e) {}
+  SPECCHIO.attesa = false;
+  if (snap && snap.chiavi && snap.chiavi[META]) {
+    Object.entries(snap.chiavi).forEach(([k, v]) => lsSet(k, v));
+    try { sessionStorage.setItem("ripristinato", snap.t); } catch (e) {}
+    location.reload();
+  } else specchia();
+}
+function saveNow() {
+  $("#savewarn").hidden = lsSet(KD(anno), JSON.stringify(collect()));
+  specchia();
+}
+function save() { clearTimeout(timer); timer = setTimeout(saveNow, 250); }
+
+/* converte i salvataggi precedenti nel formato attuale */
+function normalizza(d) {
+  if (d.v === 2) return d;
+  const ore = (d.ore || ORE0).map(l => ({ l, p:false, pt:"" }));
+  const col = d.cells && d.cells.length === ore.length * 6 ? 6 : 5;
+  const cells = ore.map((_, r) => GIORNI.map((_, c) => ({
+    t:(d.cells || [])[r * col + c] || "", s:(d.sost || [])[r * col + c] || "", n:"" })));
+  const att = (d.att || []).map(a => a.length === 6 ? [a[0], a[1], a[2], a[4]] : a);
+  return { v:2, f:d.f || {}, toggle:!!d.toggle, ore, cells, att, note:["","","","",""], appunti:"" };
+}
+function load() {
+  let d = null;
+  try { d = JSON.parse(lsGet(KD(anno))); } catch (e) {}
+  d = d ? normalizza(d) : { f:{}, toggle:false, ore:ORE0.map(l => ({ l, p:false, pt:"" })), cells:ORE0.map(rigaVuota), att:ESEMPI, note:["","","","",""], appunti:"" };
+  Object.entries(d.f).forEach(([k, v]) => { const e = document.getElementById(k); if (e) e.value = v; });
+  $("#toggleSost").checked = d.toggle;
+  $("#profilo").value = d.profilo || "sostegno";
+  applicaProfilo();
+  noteDays = (d.note || []).concat(["","","","",""]).slice(0, 5);
+  $("#appunti").value = d.appunti || "";
+  renderOrario(d);
+  d.att.forEach(a => addRow(a));
+  aggiornaDocenti();
+  riepilogo(); refreshAtt();
+}
+/* ---------- finestre di dialogo e avvisi (al posto di confirm/prompt/alert del browser) ---------- */
+function dialogo({ titolo, testo = "", input = null, ok = "OK", annulla = "Annulla", pericolo = false }) {
+  return new Promise(res => {
+    const inp = $("#mInp"), okB = $("#mOk"), noB = $("#mNo");
+    $("#mTit").textContent = titolo; $("#mTxt").textContent = testo; $("#mTxt").hidden = !testo;
+    inp.hidden = input === null; inp.value = input === null ? "" : input;
+    okB.textContent = ok; okB.classList.toggle("pericolo", pericolo);
+    noB.hidden = annulla === null; noB.textContent = annulla || "";
+    $("#modal").hidden = false;
+    const chiudi = v => { $("#modal").hidden = true; document.removeEventListener("keydown", tasti, true); res(v); };
+    const tasti = e => { if (e.key === "Escape") { e.preventDefault(); chiudi(null); } else if (e.key === "Enter" && e.target !== noB) { e.preventDefault(); chiudi(input === null ? true : inp.value); } };
+    document.addEventListener("keydown", tasti, true);
+    okB.onclick = () => chiudi(input === null ? true : inp.value);
+    noB.onclick = () => chiudi(null);
+    $("#modal").onclick = e => { if (e.target.id === "modal") chiudi(null); };
+    (input === null ? okB : inp).focus();
+  });
+}
+const conferma = (titolo, testo, ok = "OK", pericolo = false) => dialogo({ titolo, testo, ok, pericolo }).then(v => v === true);
+const avviso = testo => dialogo({ titolo:"Attenzione", testo, annulla:null });
+let toastTimer;
+function toast(msg, azione, fn) {
+  clearTimeout(toastTimer);
+  $("#toastMsg").textContent = msg;
+  const b = $("#toastBtn"); b.hidden = !azione; b.textContent = azione || "";
+  b.onclick = () => { $("#toast").hidden = true; fn && fn(); };
+  $("#toast").hidden = false;
+  toastTimer = setTimeout(() => { $("#toast").hidden = true; }, 7000);
+}
+
+async function resetAll() {
+  if (!await conferma(`Svuotare l'anno ${anno}?`, "Verranno cancellati orario, attività e appunti di questo anno. Gli altri anni non vengono toccati. Se vuoi conservare i dati, esporta prima un backup.", "Svuota", true)) return;
+  try { localStorage.removeItem(KD(anno)); } catch (e) {}
+  location.reload();
+}
+
+/* ---------- anni scolastici ---------- */
+function annoPredefinito() { const d = new Date(), y = d.getFullYear(); return d.getMonth() >= 8 ? `${y}/${y + 1}` : `${y - 1}/${y}`; }
+function salvaMeta() { lsSet(META, JSON.stringify(meta)); specchia(); }
+function leggiMeta() {
+  let m = null;
+  try { m = JSON.parse(lsGet(META)); } catch (e) {}
+  if (!m || !Array.isArray(m.anni) || !m.anni.length) {            // primo avvio o salvataggio del vecchio formato
+    let old = null;
+    try { old = JSON.parse(lsGet(KEY)); } catch (e) {}
+    const nome = (old && old.f && old.f.as) || annoPredefinito();
+    m = { anni:[nome], corrente:nome };
+    if (old && lsSet(KD(nome), JSON.stringify(old))) { try { localStorage.removeItem(KEY); } catch (e) {} }
+  }
+  if (!m.anni.includes(m.corrente)) m.corrente = m.anni[0];
+  return m;
+}
+function popolaAnni() {
+  const d = new Date(), y0 = d.getMonth() >= 8 ? d.getFullYear() : d.getFullYear() - 1;
+  const futuri = []; for (let y = y0; y < y0 + 8; y++) { const n = `${y}/${y + 1}`; if (!meta.anni.includes(n)) futuri.push(n); }
+  $("#annoSel").innerHTML = [...meta.anni].sort().map(a => `<option${a === anno ? " selected" : ""}>${esc(a)}</option>`).join("")
+    + (futuri.length ? `<optgroup label="Anni futuri (crea nuovo)">${futuri.map(n => `<option value="nuovo:${n}">${n}</option>`).join("")}</optgroup>` : "")
+    + `<option value="manuale">✎ Altro anno (scrivi a mano)…</option>`;
+}
+async function scegliAnno(v) {
+  if (v !== "manuale" && !v.startsWith("nuovo:")) return cambiaAnno(v);
+  let nome;
+  if (v === "manuale") {
+    nome = await chiediNome("Scrivi l'anno scolastico (es. 2035/2036)", prossimoAnno(anno));
+    if (!nome) { popolaAnni(); return; }
+  } else {
+    nome = v.slice(6);
+    const ok = await conferma(`Passare al ${nome}?`, "Verrà creato un nuovo anno scolastico: i dati degli altri anni restano salvati e puoi tornarci dal menu in alto.", "Crea anno");
+    if (!ok) { popolaAnni(); return; }
+  }
+  const copia = await dialogo({ titolo:"Come vuoi iniziare?", testo:"Puoi partire dall'orario di quest'anno (attività e note ripartono vuote) oppure da un orario vuoto.", ok:"Copia l'orario", annulla:"Orario vuoto" });
+  nuovoAnno(copia === true, nome);
+}
+function cambiaAnno(a) { saveNow(); meta.corrente = a; salvaMeta(); location.reload(); }
+async function chiediNome(titolo, predefinito, escludi) {
+  const r = await dialogo({ titolo, input:predefinito, ok:"Conferma" });
+  const n = (r || "").trim();
+  if (!n) return null;
+  if (n !== escludi && meta.anni.includes(n)) { await avviso("Esiste già un anno scolastico con questo nome."); return null; }
+  return n;
+}
+function prossimoAnno(a) { const m = /(\d{4})\D+(\d{4})/.exec(a); return m ? `${+m[1] + 1}/${+m[2] + 1}` : ""; }
+async function nuovoAnno(copia, preset) {
+  const nome = preset || await chiediNome("Nome del nuovo anno scolastico (es. 2027/2028)", prossimoAnno(anno));
+  if (!nome) return;
+  saveNow();
+  const cur = collect(), vuote = ["","","","",""];
+  const nuovo = copia
+    ? { ...cur, att:[], note:vuote, appunti:"" }
+    : { v:2, f:{ docente:cur.f.docente || "", scuola:cur.f.scuola || "", cattedra:cur.f.cattedra || "", classi:cur.f.classi || "" }, profilo:cur.profilo, toggle:cur.toggle, ore:ORE0.map(l => ({ l, p:false, pt:"" })), cells:ORE0.map(rigaVuota), att:[], note:vuote, appunti:"" };
+  if (!lsSet(KD(nome), JSON.stringify(nuovo))) return avviso("Impossibile salvare: spazio del browser non disponibile.");
+  meta.anni.push(nome); meta.corrente = nome; salvaMeta(); location.reload();
+}
+async function rinominaAnno() {
+  const nome = await chiediNome("Nuovo nome per l'anno scolastico", anno, anno);
+  if (!nome || nome === anno) return;
+  saveNow();
+  const dati = lsGet(KD(anno));
+  if (dati === null || !lsSet(KD(nome), dati)) return avviso("Impossibile rinominare.");
+  try { localStorage.removeItem(KD(anno)); } catch (e) {}
+  meta.anni = meta.anni.map(a => a === anno ? nome : a); meta.corrente = nome; salvaMeta(); location.reload();
+}
+async function eliminaAnno() {
+  if (meta.anni.length <= 1) return avviso("Deve restare almeno un anno scolastico. Per ripartire da zero usa \"Svuota tutto\" nella scheda Orario.");
+  if (!await conferma(`Eliminare l'anno ${anno}?`, "Verranno cancellati il suo orario, le attività e gli appunti. L'operazione non si può annullare: esporta prima un backup se ti serve.", "Elimina anno", true)) return;
+  try { localStorage.removeItem(KD(anno)); } catch (e) {}
+  meta.anni = meta.anni.filter(a => a !== anno); meta.corrente = meta.anni[meta.anni.length - 1]; salvaMeta(); location.reload();
+}
+
+/* ---------- backup ---------- */
+function renderBk() {
+  let iso = null; try { iso = localStorage.getItem(KEY_BK); } catch (e) {}
+  const giorni = iso ? Math.floor((Date.now() - new Date(iso)) / 864e5) : null;
+  $("#bkstato").innerHTML = iso ? `Ultimo backup: <b>${new Date(iso).toLocaleString("it-IT", { dateStyle:"medium", timeStyle:"short" })}</b>` : `Non hai ancora fatto nessun backup.`;
+  const w = $("#bkwarn");
+  if (giorni === null || giorni > 14) {
+    w.innerHTML = giorni === null ? `Non hai ancora fatto un backup dei dati. <a href="#backup">Esporta backup</a>` : `Ultimo backup di ${giorni} giorni fa. <a href="#backup">Esporta backup</a>`;
+    w.hidden = false;
+  } else w.hidden = true;
+}
+function backupFile() {
+  saveNow();
+  const nome = `agenda-docente-${oggiIso()}.json`;
+  const anni = {};
+  meta.anni.forEach(a => { try { anni[a] = a === anno ? collect() : JSON.parse(lsGet(KD(a))); } catch (e) {} });
+  const json = JSON.stringify({ app:"agenda-docente", v:3, esportato:new Date().toISOString(), corrente:anno, anni }, null, 1);
+  return { nome, json };
+}
+function segnaBackup() { try { localStorage.setItem(KEY_BK, new Date().toISOString()); } catch (e) {} renderBk(); }
+function esporta() {
+  const { nome, json } = backupFile();
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([json], { type:"application/json" }));
+  a.download = nome; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  segnaBackup();
+}
+async function condividi() {
+  const { nome, json } = backupFile();
+  const file = new File([json], nome, { type:"application/json" });
+  try { await navigator.share({ files:[file], title:"Backup agenda del docente" }); segnaBackup(); } catch (e) { /* annullato */ }
+}
+function importa(file) {
+  const r = new FileReader();
+  r.onload = async () => {
+    try {
+      const o = JSON.parse(r.result);
+      if (o.app !== "agenda-docente") throw 0;
+      if (o.anni && typeof o.anni === "object") {                       // backup con tutti gli anni
+        const nomi = Object.keys(o.anni);
+        if (!nomi.length) throw 0;
+        if (!await conferma("Importare il backup?", `Il backup contiene ${nomi.length} ann${nomi.length === 1 ? "o" : "i"} scolastic${nomi.length === 1 ? "o" : "i"} (${nomi.join(", ")}). Tutti i dati attuali verranno sostituiti.`, "Importa", true)) return;
+        meta.anni.forEach(a => { try { localStorage.removeItem(KD(a)); } catch (e) {} });
+        nomi.forEach(a => lsSet(KD(a), JSON.stringify(o.anni[a])));
+        meta = { anni:nomi, corrente:nomi.includes(o.corrente) ? o.corrente : nomi[0] };
+      } else if (o.data) {                                             // vecchio backup di un solo anno
+        const nome = (o.data.f && o.data.f.as) || anno;
+        if (!await conferma("Importare il backup?", `Verrà importato come anno scolastico ${nome}.` + (meta.anni.includes(nome) ? " I dati di quell'anno verranno sostituiti." : ""), "Importa", meta.anni.includes(nome))) return;
+        lsSet(KD(nome), JSON.stringify(o.data));
+        if (!meta.anni.includes(nome)) meta.anni.push(nome);
+        meta.corrente = nome;
+      } else throw 0;
+      salvaMeta();
+      location.reload();
+    } catch (e) { avviso("File non valido: scegli un backup creato da questa agenda."); }
+  };
+  r.readAsText(file);
+}
+
+/* ---------- avvio ---------- */
+$("#days").innerHTML = BREVI.map((b, i) => `<button type="button" data-d="${i}">${b}</button>`).join("");
+/* copia di sicurezza in IndexedDB: protegge da altre pagine dello stesso sito che svuotano localStorage */
+const SPECCHIO = { attesa:false };
+(function () {
+  try {
+    if (typeof indexedDB === "undefined") return;
+    let tracce = lsGet(META) !== null || lsGet(KEY) !== null;
+    for (let i = 0; !tracce && i < localStorage.length; i++) if ((localStorage.key(i) || "").startsWith("orario_docente_a:")) tracce = true;
+    SPECCHIO.attesa = !tracce;
+  } catch (e) {}
+})();
+meta = leggiMeta(); anno = meta.corrente; salvaMeta(); popolaAnni();
+load();
+renderBk();
+riempiAttivita();
+ripristinaDaSpecchio();
+try { const rp = sessionStorage.getItem("ripristinato"); if (rp) { sessionStorage.removeItem("ripristinato"); setTimeout(() => toast("Dati ripristinati dalla copia di sicurezza (" + new Date(rp).toLocaleString("it-IT", { dateStyle:"short", timeStyle:"short" }) + ")"), 400); } } catch (e) {}
+try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}
+if (navigator.canShare && navigator.canShare({ files:[new File(["x"], "x.json", { type:"application/json" })] })) $("#bkCondividi").hidden = false;
+
+/* ---------- eventi (delegati) ---------- */
+/* ---------- modifica delle attività dal Promemoria ---------- */
+function promRiga(el) { const it = el.closest(".pitem"); return it ? { it, tr:$$("#attivita tbody tr")[+it.dataset.i] } : null; }
+$("#prom").addEventListener("click", e => {
+  const ok = e.target.closest(".pe-ok"), row = e.target.closest(".prow");
+  if (ok) { ok.closest(".pitem").classList.add("chiuso"); saveNow(); refreshAtt(); toast("Modifiche salvate"); return; }
+  if (row) row.closest(".pitem").classList.toggle("chiuso");
+});
+$("#prom").addEventListener("keydown", e => {
+  const row = e.target.closest && e.target.closest(".prow");
+  if (row && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); row.closest(".pitem").classList.toggle("chiuso"); }
+});
+function promScrivi(e) {
+  const t = e.target, r = promRiga(t); if (!r || !r.tr) return;
+  if (t.classList.contains("cls") && t.value === "__m") return;
+  const tr = r.tr, inp = tr.querySelectorAll("input");
+  if (t.classList.contains("pe-d")) inp[0].value = t.value;
+  else if (t.classList.contains("pe-t")) inp[1].value = t.value;
+  else if (t.classList.contains("pe-c")) { riempiClasse(tr.querySelector(".cls"), t.value); }
+  else if (t.classList.contains("pe-s")) tr.querySelector(".stsel").value = t.value;
+  else if (t.classList.contains("pe-n")) { tr.querySelector(".nota").value = t.value; autoGrowNota(t); }
+  else return;
+  stato(tr); applyFilter(); save();
+  if (t.classList.contains("pe-t")) { const b = r.it.querySelector(".pt b"); if (b) b.textContent = t.value || "(senza titolo)"; }
+  if (t.classList.contains("pe-n")) { let n = r.it.querySelector(".pnota"); if (!n && t.value.trim()) { n = document.createElement("div"); n.className = "pnota"; r.it.querySelector(".prow").after(n); } if (n) { n.textContent = t.value; n.hidden = !t.value.trim(); } }
+}
+function autoGrowNota(t) { t.style.height = "auto"; t.style.height = Math.max(60, t.scrollHeight + 2) + "px"; }
+$("#prom").addEventListener("input", promScrivi);
+$("#prom").addEventListener("change", promScrivi);
+document.addEventListener("input", e => {
+  const t = e.target;
+  if (t.classList.contains("cell")) colorCell(t);
+  if (t.id === "noteDay") noteDays[curDay] = t.value;
+  if (t.closest("#attivita")) refreshAtt();
+  if (t.classList.contains("sn")) {
+    const td = t.closest("td"), mt = td.querySelector(".mat"), k = t.value.trim().toLowerCase(), noto = k && mappaDocenti()[k];
+    if (noto && noto.materia && !mt.value) {            // docente già noto: abbina la materia
+      mt.value = noto.materia; mt.dataset.prev = mt.value;
+      td.querySelector(".cell").innerText = mt.value;
+    }
+    colorCell(td.querySelector(".cell")); aggiornaDocenti();
+  }
+  if (t.id === "cattedra") riepilogo();
+  if (t.id === "classi") aggiornaClassi();
+  if (t.closest("#orario")) riepilogo();
+  if (t.id === "q") applyFilter();
+  save();
+});
+document.addEventListener("change", e => {
+  const t = e.target;
+  if ((t.classList.contains("stsel")) && t.value === "Svolta" && $("#fnascondi").checked && !$("#fstato").value)
+    setTimeout(() => toast("Attività svolta: nascosta dall'elenco", "Mostra svolte", () => { $("#fnascondi").checked = false; applyFilter(); }), 50);
+  if (t.classList.contains("cls") && t.value === "__m") { classeManuale(t); return; }
+  if (t.id === "toggleSost") { applicaProfilo(); riepilogo(); }
+  if (t.id === "profilo") { applicaProfilo(); $$(".cell").forEach(colorCell); riepilogo(); }
+  if (t.matches("[data-sost]")) { sostColor(t); riepilogo(); }
+  if (t.classList.contains("mat")) {
+    const td = t.closest("td"), c = td.querySelector(".cell"), sn = td.querySelector(".sn"), prev = t.dataset.prev || "";
+    c.innerText = t.value;   // la materia è l'unico testo della cella
+    if (t.value && !sn.value.trim()) {                  // un solo docente per quella materia: lo propone
+      const cand = Object.values(mappaDocenti()).filter(o => o.materia === t.value);
+      if (cand.length === 1) sn.value = cand[0].nome;
+    }
+    t.dataset.prev = t.value; colorCell(c); aggiornaDocenti(); riepilogo();
+  }
+  if (t.id === "fstato" || t.id === "fnascondi") applyFilter();
+  if (t.closest("#attivita")) refreshAtt();
+  if (t.id === "bkFile" && t.files[0]) { importa(t.files[0]); t.value = ""; }
+  save();
+});
+document.addEventListener("click", e => {
+  const b = e.target.closest("#days button"), th = e.target.closest("#orario th[data-c]"),
+        del = e.target.closest(".lista button.del"), mini = e.target.closest("button.mini");
+  if (b) return setDay(+b.dataset.d);
+  if (th) return setDay(+th.dataset.c);
+  if (del) {
+    const tr = del.closest("tr"), pos = tr.nextSibling, tb = tr.parentNode, id = tr.closest("table").id;
+    const dopo = () => refreshAtt();
+    tr.remove(); dopo(); save();
+    return toast("Attività eliminata", "Annulla", () => { tb.insertBefore(tr, pos); dopo(); save(); });
+  }
+  if (mini) {
+    const tr = mini.closest("tr"), i = [...tr.parentNode.children].indexOf(tr), act = mini.dataset.act;
+    const prima = collect();
+    mutate(s => {
+      if (act === "del") {
+        s.ore.splice(i, 1); s.cells.splice(i, 1);
+        toast("Riga eliminata", "Annulla", () => { renderOrario(prima); riepilogo(); save(); });
+      } else if (act === "add" || act === "pausa") {
+        const m = RE_ORA.exec(s.ore[i].l), fine = m ? +m[3] * 60 + +m[4] : null, p = act === "pausa";
+        const l = fine === null ? (p ? "" : "Nuova ora") : `${hhmm(fine)}–${hhmm(fine + (p ? 15 : 60))}`;
+        s.ore.splice(i + 1, 0, { l, p, pt:p ? "Ricreazione" : "" });
+        s.cells.splice(i + 1, 0, rigaVuota());
+      } else {
+        const j = act === "up" ? i - 1 : i + 1;
+        if (j < 0 || j >= s.ore.length) return;
+        [s.ore[i], s.ore[j]] = [s.ore[j], s.ore[i]]; [s.cells[i], s.cells[j]] = [s.cells[j], s.cells[i]];
+      }
+    });
+  }
+});
+$("#addOra").onclick = () => mutate(s => { s.ore.push({ l:prossimaEtichetta(s.ore), p:false, pt:"" }); s.cells.push(rigaVuota()); });
+$("#addPausa").onclick = () => mutate(s => { s.ore.push({ l:"", p:true, pt:"Ricreazione" }); s.cells.push(rigaVuota()); });
+$("#annoSel").onchange = e => scegliAnno(e.target.value);
+$("#annoNuovo").onclick = () => nuovoAnno(false);
+$("#annoCopia").onclick = () => nuovoAnno(true);
+$("#annoRinomina").onclick = rinominaAnno;
+$("#annoElimina").onclick = eliminaAnno;
+$("#bkEsporta").onclick = esporta;
+$("#bkCondividi").onclick = condividi;
+$("#bkImporta").onclick = () => $("#bkFile").click();
+document.addEventListener("keydown", e => {
+  if (e.key === "Enter" && (e.target.classList.contains("oralabel") || e.target.classList.contains("pausatext"))) { e.preventDefault(); e.target.blur(); }
+});
+addEventListener("pagehide", saveNow);
+document.addEventListener("visibilitychange", () => { if (document.hidden) saveNow(); else refreshAtt(); });
+
+/* ---------- installazione come app ---------- */
+let promptInstall;
+addEventListener("beforeinstallprompt", e => { e.preventDefault(); promptInstall = e; $("#btnInstall").hidden = false; });
+$("#btnInstall").onclick = async () => { if (!promptInstall) return; promptInstall.prompt(); await promptInstall.userChoice; promptInstall = null; $("#btnInstall").hidden = true; };
+if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register("sw.js").catch(() => {});
+
+/* ---------- navigazione: una sezione per volta ---------- */
+function mostra(id, sposta = true) {
+  const ok = x => { const p = document.getElementById(x); return p && p.classList.contains("page") && !(p.classList.contains("solo-sost") && !isSost()); };
+  if (!ok(id)) id = "oggi";
+  $$(".page").forEach(p => p.classList.toggle("nascosta", p.id !== id));
+  $$(".tabs a").forEach(a => { const on = a.getAttribute("href") === "#" + id; a.classList.toggle("attiva", on); if (on) a.style.setProperty("--sc-tab", a.style.background.replace(/^var\((.*)\)$/, (m, v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim() || "#6d4aff")); });
+  document.body.className = document.body.className.replace(/\s*\bsez-\S+/g, "") + " sez-" + id;
+  if (sposta) window.scrollTo(0, 0);
+  try { sessionStorage.setItem("sezione", id); } catch (e) {}
+}
+document.addEventListener("click", e => {
+  const a = e.target.closest('a[href^="#"]');
+  if (!a || !a.getAttribute("href").slice(1)) return;
+  const id = a.getAttribute("href").slice(1);
+  if (!$$(".page").some(p => p.id === id)) return;
+  e.preventDefault(); mostra(id);
+});
+let iniz = "oggi"; try { iniz = sessionStorage.getItem("sezione") || "oggi"; } catch (e) {}
+mostra(iniz, false);
+</script>
+</body>
+</html>
